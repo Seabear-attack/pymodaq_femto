@@ -3,6 +3,8 @@ import subprocess
 
 import numpy as np
 from types import SimpleNamespace
+
+from pymodaq.utils.data import DataFromPlugins
 from qtpy import QtWidgets, QtCore
 from qtpy.QtCore import QObject, Slot, QThread, Signal, QLocale
 from qtpy.QtGui import QIcon, QPixmap
@@ -1347,7 +1349,8 @@ class Retriever(QObject):
             )
 
             self.display_data_in()
-            self.update_spectrum_info(self.data_in["raw_spectrum"])
+            self.update_spectrum_info(DataFromPlugins(name='Raw Spectrum',
+                                                      data=self.data_in["raw_spectrum"]))
             self.update_trace_info(self.data_in["raw_trace"])
 
             for child in putils.iter_children_params(
@@ -1543,7 +1546,8 @@ class Retriever(QObject):
             self.viewer_trace_in.ROIselect_action.trigger()
 
     def display_trace_in(self):
-        self.viewer_trace_in.show_data(self.data_in["raw_trace"]["data"])
+        self.viewer_trace_in.show_data(DataFromPlugins(name='Trace', distrubution='uniform',
+                                       data=self.data_in["raw_trace"]["data"]))
         self.viewer_trace_in.x_axis = self.data_in["raw_trace"]["x_axis"]
         self.viewer_trace_in.y_axis = self.data_in["raw_trace"]["y_axis"]
         self.viewer_trace_in.get_action('autolevels').trigger() # Auto scale colormap
@@ -1554,11 +1558,11 @@ class Retriever(QObject):
             self.viewer_trace_in.get_action('histo').trigger()
 
     def display_spectrum_in(self):
-        self.viewer_spectrum_in.show_data(
-            [self.data_in["raw_spectrum"]["data"]],
+        self.viewer_spectrum_in.show_data(DataFromPlugins(name='Spectrum',
+            data=[self.data_in["raw_spectrum"]["data"]],
             x_axis=self.data_in["raw_spectrum"]["x_axis"],
             labels=["Spectrum"],
-        )
+        ))
 
     def display_data_in(self):
         self.display_trace_in()

@@ -26,7 +26,6 @@ from pymodaq_femto.graphics import (
     PulsePropagationPlot,
 )
 
-import pymodaq_femto.src.pymodaq_femto.graphics
 from pymodaq_femto.simulator import Simulator, materials
 from collections import OrderedDict
 from pypret import FourierTransform, Pulse, PNPS, lib, MeshData, random_gaussian

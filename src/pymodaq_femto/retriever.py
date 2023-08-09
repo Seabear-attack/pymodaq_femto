@@ -13,15 +13,15 @@ from qtpy.QtGui import QIcon, QPixmap
 from qtpy.QtGui import QTextCursor
 from pyqtgraph.dockarea import Dock
 from pyqtgraph.parametertree import Parameter, ParameterTree
-from pymodaq.daq_utils import daq_utils as utils
-from pymodaq.daq_utils import gui_utils as gutils
-from pymodaq.daq_utils.parameter import utils as putils, ioxml
-from pymodaq.daq_utils.h5modules import browse_data
-from pymodaq.daq_utils.plotting.data_viewers.viewer0D import Viewer0D
-from pymodaq.daq_utils.plotting.data_viewers.viewer1D import Viewer1D
-from pymodaq.daq_utils.plotting.data_viewers.viewer2D import Viewer2D
-from pymodaq.daq_utils.managers.action_manager import QAction
-from pymodaq.daq_utils.managers.roi_manager import LinearROI
+from pymodaq.utils import daq_utils as utils
+from pymodaq.utils import gui_utils as gutils
+from pymodaq.utils.parameter import utils as putils, ioxml
+from pymodaq.utils.h5modules.browsing import browse_data
+from pymodaq.utils.plotting.data_viewers.viewer0D import Viewer0D
+from pymodaq.utils.plotting.data_viewers.viewer1D import Viewer1D
+from pymodaq.utils.plotting.data_viewers.viewer2D import Viewer2D
+from pymodaq.utils.managers.action_manager import QAction
+from pymodaq.utils.managers.roi_manager import LinearROI
 from pymodaq_femto.graphics import (
     RetrievalResultPlot,
     MplCanvas,
@@ -37,8 +37,8 @@ from pypret.frequencies import om2wl, wl2om, convert
 import scipy
 import importlib
 from scipy.fftpack import next_fast_len
-from pymodaq.daq_utils.h5modules import H5BrowserUtil, H5Saver
-from pymodaq.daq_utils.h5utils import get_h5_data_from_node
+from pymodaq.utils.h5modules.browsing import H5BrowserUtil, H5Saver
+from pymodaq.utils.h5modules.utils import get_h5_data_from_node
 from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 from pymodaq_femto import _PNPS_CLASSES
 from pypret.retrieval.retriever import _RETRIEVER_CLASSES
@@ -2300,7 +2300,7 @@ class RetrieverWorker(QObject):
 
 
 def main():
-    from pymodaq.daq_utils.daq_utils import get_set_preset_path
+    from pymodaq.utils.daq_utils import get_set_preset_path
 
     app = QtWidgets.QApplication(sys.argv)
     win = QtWidgets.QMainWindow()

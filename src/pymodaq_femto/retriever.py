@@ -1,14 +1,10 @@
 import sys
 import subprocess
 
-import logging
-from pathlib import Path
 import numpy as np
 from types import SimpleNamespace
-import io
-from contextlib import redirect_stdout
-from qtpy import QtGui, QtWidgets, QtCore
-from qtpy.QtCore import Qt, QObject, Slot, QThread, Signal, QLocale
+from qtpy import QtWidgets, QtCore
+from qtpy.QtCore import QObject, Slot, QThread, Signal, QLocale
 from qtpy.QtGui import QIcon, QPixmap
 from qtpy.QtGui import QTextCursor
 from pyqtgraph.dockarea import Dock
@@ -17,7 +13,6 @@ from pymodaq.utils import daq_utils as utils
 from pymodaq.utils import gui_utils as gutils
 from pymodaq.utils.parameter import utils as putils, ioxml
 from pymodaq.utils.h5modules.browsing import browse_data
-from pymodaq.utils.plotting.data_viewers.viewer0D import Viewer0D
 from pymodaq.utils.plotting.data_viewers.viewer1D import Viewer1D
 from pymodaq.utils.plotting.data_viewers.viewer2D import Viewer2D
 from pymodaq.utils.managers.action_manager import QAction
@@ -30,16 +25,16 @@ from pymodaq_femto.graphics import (
     PulsePlot,
     PulsePropagationPlot,
 )
-from pymodaq_femto.simulator import Simulator, methods, nlprocesses, materials
+
+import pymodaq_femto.src.pymodaq_femto.graphics
+from pymodaq_femto.simulator import Simulator, materials
 from collections import OrderedDict
 from pypret import FourierTransform, Pulse, PNPS, lib, MeshData, random_gaussian
-from pypret.frequencies import om2wl, wl2om, convert
+from pypret.frequencies import wl2om, convert
 import scipy
-import importlib
 from scipy.fftpack import next_fast_len
 from pymodaq.utils.h5modules.browsing import H5BrowserUtil, H5Saver
 from pymodaq.utils.h5modules.utils import get_h5_data_from_node
-from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 from pymodaq_femto import _PNPS_CLASSES
 from pypret.retrieval.retriever import _RETRIEVER_CLASSES
 import warnings
@@ -976,7 +971,9 @@ class Retriever(QObject):
 
         data_in_splitter = QtWidgets.QSplitter()
         self.viewer_trace_in = Viewer2D(QtWidgets.QWidget())
-        self.viewer_trace_in.histogrammer.set_gradient(gradient="femto")        # Change default colormap
+
+        # TODO
+        self.viewer_trace_in.set_gradient(image_key='red', gradient="femto")        # Change default colormap
 
         for key in ['red', 'green', 'blue']:        # Hides all RGB controls (not needed for a trace)
             self.viewer_trace_in.get_action(key).setVisible(False)
@@ -1019,7 +1016,9 @@ class Retriever(QObject):
         # setup retriever dock
         retriever_widget = QtWidgets.QSplitter()
         self.viewer_live_trace = Viewer2D(QtWidgets.QWidget())
-        self.viewer_live_trace.histogrammer.set_gradient(gradient="femto_error")
+
+        # TODO
+        self.viewer_live_trace.set_gradient(image_key='red', gradient="femto_error")
         for key in ['red', 'green', 'blue']:        # Hides all RGB controls (not needed for a trace)
             self.viewer_trace_in.get_action(key).setVisible(False)
 
@@ -1545,7 +1544,7 @@ class Retriever(QObject):
             self.viewer_trace_in.ROIselect_action.trigger()
 
     def display_trace_in(self):
-        self.viewer_trace_in.setImage(self.data_in["raw_trace"]["data"])
+        self.viewer_trace_in.show_data(self.data_in["raw_trace"]["data"])
         self.viewer_trace_in.x_axis = self.data_in["raw_trace"]["x_axis"]
         self.viewer_trace_in.y_axis = self.data_in["raw_trace"]["y_axis"]
         self.viewer_trace_in.get_action('autolevels').trigger() # Auto scale colormap
@@ -2300,8 +2299,6 @@ class RetrieverWorker(QObject):
 
 
 def main():
-    from pymodaq.utils.daq_utils import get_set_preset_path
-
     app = QtWidgets.QApplication(sys.argv)
     win = QtWidgets.QMainWindow()
     area = gutils.DockArea()

@@ -2,17 +2,19 @@ from pathlib import Path
 from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 from collections import OrderedDict
 from . import materials
+from . import graphics
+
 
 NICE_NAME = 'FemtoRetriever'
 module_name = 'retriever'
 klass_name = 'Retriever'
 
 # #### including dscan
+# import pypret_pymodaq.pypret.
 from pypret.pnps import _PNPS_CLASSES
 _PNPS_CLASSES.pop('dscan')
 from pymodaq_femto.pnps import DSCAN
 # ############
-
 try:
     with open(str(Path(__file__).parent.joinpath('VERSION')), 'r') as fvers:
         __version__ = fvers.read().strip()

@@ -77,6 +77,7 @@ class DataIn(OrderedDict):
         raw_spectrum: (dict) with data and axis as keys containing the spectrum and an Axis object
         raw_trace: (dict) with data axis and parameter_axis keys
         """
+        super().__init__()
         if not isinstance(name, str):
             raise TypeError("name for the DataIn class should be a string")
         self["name"] = name
@@ -120,6 +121,7 @@ def pulse_from_spectrum(wavelength, spectrum, pulse=None):
 
 
 def preprocess(trace, signal_range=None, dark_signal_range=None):
+    dark_signal = None
     if dark_signal_range is not None:
         dark_signal = trace.copy()
         dark_signal.limit(dark_signal_range, axes=1)
@@ -226,6 +228,7 @@ def retrieve_step_fix_spectrum(self, iteration, En):
             The current pulse spectrum.
         """
     # local rename
+    R = None
     ft = self.ft
     options = self.options
     pnps = self.pnps
@@ -1203,7 +1206,7 @@ class Retriever(QObject):
                             * 1e-9
                     )
 
-                    pos_pxl, y = self.viewer_trace_in.unscale_axis(
+                    pos_pxl, y = self.viewer_trace_in.view.unscale_axis(
                         np.array(pos_real), np.array([0, 1])
                     )
                     self.linear_region.setPos(pos_pxl)
@@ -1543,7 +1546,7 @@ class Retriever(QObject):
         self.display_trace_in()
 
         if not "trace_loaded" in self.state:   # We dont clear the ROIs if this is not the first loaded trace
-            self.viewer_trace_in.ROIselect_action.trigger()
+            self.viewer_trace_in.view.ROIselect_action.trigger()
 
     def display_trace_in(self):
         self.viewer_trace_in.show_data(DataFromPlugins(name='Trace', distrubution='uniform',
@@ -1612,7 +1615,7 @@ class Retriever(QObject):
 
     def update_linear(self, linear_roi):
         pos = linear_roi.pos()
-        pos_real, y = self.viewer_trace_in.scale_axis(np.array(pos), np.array([0, 1]))
+        pos_real, y = self.viewer_trace_in.view.scale_axis(np.array(pos), np.array([0, 1]))
         pos_real *= 1e9
         self.settings.child("processing", "linearselect", "wl0").setValue(pos_real[0])
         self.settings.child("processing", "linearselect", "wl1").setValue(pos_real[1])
@@ -1796,7 +1799,7 @@ class Retriever(QObject):
             height = self.settings.child("processing", "ROIselect", "height").value()
             xlim_pxls = np.array([x0, x0 + width])
             ylim_pxls = np.array([y0, y0 + height])
-            xlim, ylim = self.viewer_trace_in.scale_axis(xlim_pxls, ylim_pxls)
+            xlim, ylim = self.viewer_trace_in.view.axis.scale_axis(xlim_pxls, ylim_pxls)
             trace_in = preprocess(trace_in, signal_range=(tuple(ylim), tuple(xlim)))
 
         self.data_in["trace_in"] = trace_in
@@ -1854,9 +1857,9 @@ class Retriever(QObject):
 
 
         max = 0.8 * np.max([np.abs(np.max(args[0])), np.abs(np.min(args[0]))])
-        self.viewer_live_trace.histogrammer.set_gradient(gradient="femto_error")
+        self.viewer_live_trace.set_gradient(gradient="femto_error")
 
-        self.viewer_live_trace.setImage(args[0])
+        self.viewer_live_trace.view.setImage(args[0])
         self.viewer_live_trace.get_action('autolevels').trigger()
         # for key in ['red', 'green', 'blue']:        # Hides all RGB controls (not needed for a trace)
         #     if not key == 'red': self.viewer_live_trace.get_action(key).trigger()
@@ -1881,7 +1884,7 @@ class Retriever(QObject):
             labels=["Temporal Intensity"],
         )
         self.viewer_live_lambda.show_data(
-            [np.abs(self.data_in["pulse_in"].spectrum) ** 2],
+            DataWithAxes(data=[np.abs(self.data_in["pulse_in"].spectrum) ** 2]),
             x_axis=Axis(
                 data=self.data_in["pulse_in"].wl, label="Wavelength", units="m"
             ),

@@ -1,21 +1,21 @@
-from qtpy.QtCore import QObject
-from qtpy import QtWidgets
-
+from collections import OrderedDict
 from pathlib import Path
-from pyqtgraph.parametertree import Parameter, ParameterTree
-from pymodaq.utils.parameter import pymodaq_ptypes
-from pypret.frequencies import om2wl, wl2om, convert
-from pypret import FourierTransform, Pulse, PNPS, lib, MeshData
-from pymodaq.utils.data import Axis
+
 import numpy as np
-from pymodaq.utils.daq_utils import gauss1D, my_moment, linspace_step, normalize
+from pyqtgraph.parametertree import Parameter, ParameterTree
+from qtpy import QtWidgets
+from qtpy.QtCore import QObject
+
 from pymodaq.utils.array_manipulation import linspace_this_image, crop_vector_to_axis, crop_array_to_axis, \
     linspace_this_vect
-from pypret.material import BK7
-from pymodaq_femto.materials import FS
-from pymodaq_femto.graphics import MplCanvas, NavigationToolbar, MeshDataPlot, PulsePlot
-from collections import OrderedDict
+from pymodaq.utils.daq_utils import gauss1D, linspace_step, normalize
+from pymodaq.utils.data import Axis
 from pymodaq_femto import _PNPS_CLASSES
+from pymodaq_femto.graphics import MplCanvas, NavigationToolbar, MeshDataPlot, PulsePlot
+from pymodaq_femto.materials import FS
+from pypret import FourierTransform, Pulse, PNPS, lib, MeshData
+from pypret.frequencies import wl2om, convert
+from pypret.material import BK7
 
 methods_tmp = list(_PNPS_CLASSES.keys())
 methods_tmp.sort()

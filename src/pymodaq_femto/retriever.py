@@ -5,7 +5,7 @@ import numpy as np
 from pymodaq.utils.daq_utils import Axis
 from types import SimpleNamespace
 from pymodaq.utils.math_utils import my_moment
-from pymodaq.utils.data import DataFromPlugins, DataWithAxes
+from pymodaq.utils.data import DataFromPlugins, DataWithAxes, DataBase, DataSource
 from qtpy import QtWidgets, QtCore
 from qtpy.QtCore import QObject, Slot, QThread, Signal, QLocale
 from qtpy.QtGui import QIcon, QPixmap
@@ -40,7 +40,8 @@ from pymodaq.utils.h5modules.utils import get_h5_data_from_node
 from pymodaq_femto import _PNPS_CLASSES
 from pypret.retrieval.retriever import _RETRIEVER_CLASSES
 import warnings
-import math, os
+import math
+import os
 import inspect
 import pymodaq_femto.materials
 
@@ -57,14 +58,14 @@ for item in inspect.getmembers(pymodaq_femto.materials):
 
 class DataIn(OrderedDict):
     def __init__(
-        self,
-        name="",
-        source="",
-        trace_in=None,
-        pulse_in=None,
-        raw_spectrum=None,
-        raw_trace=None,
-        **kwargs
+            self,
+            name="",
+            source="",
+            trace_in=None,
+            pulse_in=None,
+            raw_spectrum=None,
+            raw_trace=None,
+            **kwargs
     ):
         """class subclassing from OrderedDict defining data to be processed by the retriever, either experimental or
         simulated
@@ -197,10 +198,10 @@ def nonuniform_error_vector(self, Tmn, store=True):
     mean_mu = np.sum(Tmn_meas * Tmn * w2) / np.sum(Tmn * Tmn * w2)
     mu = np.full(self.N, mean_mu)
     mask = (w2.sum(axis=0) > 0.0) & (  # weights equal to zero
-        Tmn_meas.sum(axis=0) > 0.0
+            Tmn_meas.sum(axis=0) > 0.0
     )  # measurement is zero
     mu[mask] = (
-        np.sum(Tmn_meas * Tmn * w2, axis=0)[mask] / np.sum(Tmn * Tmn * w2, axis=0)[mask]
+            np.sum(Tmn_meas * Tmn * w2, axis=0)[mask] / np.sum(Tmn * Tmn * w2, axis=0)[mask]
     )
     # extend the edges of the response function
     idx1 = lib.find(mask, lambda x: x)
@@ -270,10 +271,10 @@ def retrieve_step_fix_spectrum(self, iteration, En):
         # gradient descent w.r.t. Smk
         w2 = self._weights * self._weights
         gradrmk = (
-            -4
-            * ft.dt
-            / (ft.dw * lib.twopi)
-            * ft.backward(rs.mu * ft.forward(pnps.Smk) * (Tmn_meas - rs.mu * Tmn) * w2)
+                -4
+                * ft.dt
+                / (ft.dw * lib.twopi)
+                * ft.backward(rs.mu * ft.forward(pnps.Smk) * (Tmn_meas - rs.mu * Tmn) * w2)
         )
         etar = options.alpha * r / lib.norm2(gradrmk)
         Smk2 = pnps.Smk - etar * gradrmk
@@ -294,6 +295,7 @@ def popup_message(title, text):
     msg.setText(text)
     msg.setIcon(QtWidgets.QMessageBox.Warning)
     msg.exec_()
+
 
 class Retriever(QObject):
     """
@@ -871,6 +873,7 @@ class Retriever(QObject):
 
         self.io_menu = menubar.addMenu("IO")
         self.io_menu.addAction(self.save_data_action)
+
     def setupUI(self):
         self.ui = QObject()
 
@@ -919,7 +922,6 @@ class Retriever(QObject):
                 self.toolbar.addSeparator()
                 self.load_last_scan_action.triggered.connect(self.load_last_scan)
 
-
         self.load_trace_in_action = QAction(
             QIcon(QPixmap(":/icons/Icon_Library/Open_2D.png")),
             "Load Experimental Trace",
@@ -940,7 +942,6 @@ class Retriever(QObject):
         self.save_data_action = QAction(
             QIcon(QPixmap(":/icons/Icon_Library/Save.png")), "Save Data"
         )
-
 
         self.save_settings_action = QAction(
             QIcon(QPixmap(os.path.join(self.resources_dir, 'save_settings.png'))),
@@ -970,7 +971,6 @@ class Retriever(QObject):
         self.toolbar.addAction(self.save_settings_action)
         self.toolbar.addAction(self.recall_settings_action)
 
-
         # ######################################################
         #  setup data in dock
 
@@ -978,11 +978,10 @@ class Retriever(QObject):
         self.viewer_trace_in = Viewer2D(QtWidgets.QWidget())
 
         # TODO
-        self.viewer_trace_in.set_gradient(image_key='red', gradient="femto")        # Change default colormap
+        self.viewer_trace_in.set_gradient(image_key='red', gradient="femto")  # Change default colormap
 
-        for key in ['red', 'green', 'blue']:        # Hides all RGB controls (not needed for a trace)
+        for key in ['red', 'green', 'blue']:  # Hides all RGB controls (not needed for a trace)
             self.viewer_trace_in.get_action(key).setVisible(False)
-
 
         pos = self.viewer_trace_in.roi_manager.viewer_widget.plotItem.vb.viewRange()[0]
         self.linear_region = LinearROI(index=0, pos=pos)
@@ -1022,9 +1021,8 @@ class Retriever(QObject):
         retriever_widget = QtWidgets.QSplitter()
         self.viewer_live_trace = Viewer2D(QtWidgets.QWidget())
 
-        # TODO
         self.viewer_live_trace.set_gradient(image_key='red', gradient="femto_error")
-        for key in ['red', 'green', 'blue']:        # Hides all RGB controls (not needed for a trace)
+        for key in ['red', 'green', 'blue']:  # Hides all RGB controls (not needed for a trace)
             self.viewer_trace_in.get_action(key).setVisible(False)
 
         self.viewer_live_time = Viewer1D()
@@ -1138,8 +1136,8 @@ class Retriever(QObject):
                     else:
                         self.settings.child("algo", "material").hide()
 
-                elif (param.name() in putils.iter_children( self.settings.child("processing", "ROIselect"), [] )
-                        and "ROIselect" in param.parent().name() ):  # to be sure
+                elif (param.name() in putils.iter_children(self.settings.child("processing", "ROIselect"), [])
+                      and "ROIselect" in param.parent().name()):  # to be sure
                     # a param named 'y0' for instance will not collide with the y0 from the ROI
                     try:
                         self.viewer_trace_in.ROI_select_signal.disconnect(
@@ -1147,7 +1145,7 @@ class Retriever(QObject):
                         )
                     except Exception as e:
                         pass
-                    if self.settings.child( "processing", "ROIselect", "crop_trace" ).value():
+                    if self.settings.child("processing", "ROIselect", "crop_trace").value():
                         if not self.viewer_trace_in.get_action('ROIselect').isChecked():
                             self.viewer_trace_in.get_action('ROIselect').trigger()
                             QtWidgets.QApplication.processEvents()
@@ -1284,7 +1282,8 @@ class Retriever(QObject):
                 # If spectrum scalings are changed, reload spectrum axis
                 elif param.name() == "wl_scaling" and param.parent().name() == "spectrum_in_info":
                     if "spectrum_loaded" in self.state:
-                        self.load_spectrum_in(fname=self.data_in["spectrum_file_path"], node_path=self.data_in["spectrum_node_path"])
+                        self.load_spectrum_in(fname=self.data_in["spectrum_file_path"],
+                                              node_path=self.data_in["spectrum_node_path"])
 
                 elif param.name() == "guess_type":
                     if param.value() == "Fundamental spectrum":
@@ -1329,7 +1328,7 @@ class Retriever(QObject):
         )
         dw = np.pi / (0.5 * Npts * dt)
 
-        self.ft = FourierTransform(Npts, dt, w0=wl2om(wl_center) - np.floor(Npts/2) * dw)
+        self.ft = FourierTransform(Npts, dt, w0=wl2om(wl_center) - np.floor(Npts / 2) * dw)
 
     def open_simulator(self):
         simulator_widget = QtWidgets.QWidget()
@@ -1510,7 +1509,7 @@ class Retriever(QObject):
 
         method = self.settings.child("algo", "method").value()
         if method in ["dscan", "miips"]:
-            tres = 1        # 1 fs by default
+            tres = 1  # 1 fs by default
         else:
             tres = np.mean(np.diff(raw_trace["y_axis"]["data"])) * 1e15
         self.settings.child("processing", "grid_settings", "time_resolution").setValue(tres)
@@ -1545,16 +1544,16 @@ class Retriever(QObject):
         self.update_trace_info(self.data_in["raw_trace"])
         self.display_trace_in()
 
-        if not "trace_loaded" in self.state:   # We dont clear the ROIs if this is not the first loaded trace
+        if not "trace_loaded" in self.state:  # We dont clear the ROIs if this is not the first loaded trace
             self.viewer_trace_in.view.ROIselect_action.trigger()
 
     def display_trace_in(self):
         self.viewer_trace_in.show_data(DataFromPlugins(name='Trace', distrubution='uniform',
-                                       data=self.data_in["raw_trace"]["data"]))
+                                                       data=self.data_in["raw_trace"]["data"]))
         self.viewer_trace_in.x_axis = self.data_in["raw_trace"]["x_axis"]
         self.viewer_trace_in.y_axis = self.data_in["raw_trace"]["y_axis"]
-        self.viewer_trace_in.get_action('autolevels').trigger() # Auto scale colormap
-        for key in ['red', 'green', 'blue']:        # Hides all RGB controls (not needed for a trace)
+        self.viewer_trace_in.get_action('autolevels').trigger()  # Auto scale colormap
+        for key in ['red', 'green', 'blue']:  # Hides all RGB controls (not needed for a trace)
             if not key == 'red': self.viewer_trace_in.get_action(key).trigger()
             self.viewer_trace_in.get_action(key).setVisible(False)
         if not self.viewer_trace_in.is_action_checked('histo'):
@@ -1562,10 +1561,10 @@ class Retriever(QObject):
 
     def display_spectrum_in(self):
         self.viewer_spectrum_in.show_data(DataFromPlugins(name='Spectrum',
-            data=[self.data_in["raw_spectrum"]["data"]],
-            x_axis=self.data_in["raw_spectrum"]["x_axis"],
-            labels=["Spectrum"],
-        ))
+                                                          data=[self.data_in["raw_spectrum"]["data"]],
+                                                          x_axis=self.data_in["raw_spectrum"]["x_axis"],
+                                                          labels=["Spectrum"],
+                                                          ))
 
     def display_data_in(self):
         self.display_trace_in()
@@ -1597,8 +1596,8 @@ class Retriever(QObject):
             size = self.viewer_trace_in.view.ROIselect.size()
 
         else:
-            pos = (0,0)
-            size = (1,1)
+            pos = (0, 0)
+            size = (1, 1)
 
         self.update_ROI(QtCore.QRectF(pos[0], pos[1], size[0], size[1]))
 
@@ -1680,7 +1679,7 @@ class Retriever(QObject):
                 wavelength,
                 spectrum,
                 (range[0] <= wavelength) & (wavelength <= range[1]),
-                )
+            )
 
         if self.settings.child(
                 "processing", "linearselect_spectrum", "dosubstract_spectrum"
@@ -1746,7 +1745,8 @@ class Retriever(QObject):
         try:
             PulsePlot(self.data_in["pulse_in"], self.pulse_canvas.figure)
         except ValueError:
-            popup_message("Error", "The wavelength axis of the processed spectrum seems to be wrong. Please check that i) the correct method and NL methods are selected, ii) the grid settings in 'Processing' are correct. In particular, check that 'Time resolution (fs)' makes sense - typically it is on the order of 1 fs for a standard femtosecond laser pulse.")
+            popup_message("Error",
+                          "The wavelength axis of the processed spectrum seems to be wrong. Please check that i) the correct method and NL methods are selected, ii) the grid settings in 'Processing' are correct. In particular, check that 'Time resolution (fs)' makes sense - typically it is on the order of 1 fs for a standard femtosecond laser pulse.")
         self.pulse_canvas.draw()
 
     def process_trace(self):
@@ -1855,12 +1855,13 @@ class Retriever(QObject):
     @Slot(list)
     def update_retriever(self, args):
 
-
         max = 0.8 * np.max([np.abs(np.max(args[0])), np.abs(np.min(args[0]))])
-        self.viewer_live_trace.set_gradient(gradient="femto_error")
-
-        self.viewer_live_trace.view.setImage(args[0])
+        self.viewer_live_trace.set_gradient(image_key='red', gradient="femto_error")
+        # self.viewer_live_trace.setImage(args[0])
+        self.viewer_live_trace.view.display_images(args[0])
+        # self.viewer_live_trace.view.setImage(DataBase(name='Retrieved Trace', data=args[0]))
         self.viewer_live_trace.get_action('autolevels').trigger()
+
         # for key in ['red', 'green', 'blue']:        # Hides all RGB controls (not needed for a trace)
         #     if not key == 'red': self.viewer_live_trace.get_action(key).trigger()
         #     self.viewer_live_trace.get_action(key).setVisible(False)
@@ -2030,6 +2031,8 @@ class Retriever(QObject):
 
     def save_data(self, save_file_pathname=None):
         try:
+            result_group = None
+            rr = None
             if save_file_pathname is None:
                 save_file_pathname = gutils.select_file(
                     start_path=self.save_file_pathname, save=True, ext="h5"
@@ -2135,8 +2138,10 @@ class Retriever(QObject):
             popup_message("Error", "Did not find a file with saved settings.")
         else:
             h5file = self.h5browse.open_file(path_to_file)
-            fund_data, fund_axes, fund_nav_axes, is_spread = get_h5_data_from_node('/PyMoDAQFemtoAnalysis/DataIn/FunSpectrum/Data')
-            trace_data, trace_axes, trace_nav_axes, is_spread = get_h5_data_from_node('/PyMoDAQFemtoAnalysis/DataIn/NLTrace/Data')
+            fund_data, fund_axes, fund_nav_axes, is_spread = get_h5_data_from_node(
+                '/PyMoDAQFemtoAnalysis/DataIn/FunSpectrum/Data')
+            trace_data, trace_axes, trace_nav_axes, is_spread = get_h5_data_from_node(
+                '/PyMoDAQFemtoAnalysis/DataIn/NLTrace/Data')
             attr_dict, settings, scan_settings, pixmaps = self.h5browse.get_h5_attributes('/PyMoDAQFemtoAnalysis')
             self.h5browse.close_file()
 
@@ -2147,22 +2152,22 @@ class Retriever(QObject):
             for child in putils.iter_children_params(self.settings.child("algo"), childlist=[]):
                 path = ["algo"]
                 path.extend(self.settings.child("algo").childPath(child))
-                self.settings.child(*path).setValue(saved_param.child('dataIN_settings',*path).value())
+                self.settings.child(*path).setValue(saved_param.child('dataIN_settings', *path).value())
             # Data Info settings
             for child in putils.iter_children_params(self.settings.child("data_in_info"), childlist=[]):
                 path = ["data_in_info"]
                 path.extend(self.settings.child("data_in_info").childPath(child))
-                self.settings.child(*path).setValue(saved_param.child('dataIN_settings',*path).value())
+                self.settings.child(*path).setValue(saved_param.child('dataIN_settings', *path).value())
             # Processing settings
             for child in putils.iter_children_params(self.settings.child("processing"), childlist=[]):
                 path = ["processing"]
                 path.extend(self.settings.child("processing").childPath(child))
-                self.settings.child(*path).setValue(saved_param.child('dataIN_settings',*path).value())
-            #Retrieving settings
+                self.settings.child(*path).setValue(saved_param.child('dataIN_settings', *path).value())
+            # Retrieving settings
             for child in putils.iter_children_params(self.settings.child("retrieving"), childlist=[]):
                 path = ["retrieving"]
                 path.extend(self.settings.child("retrieving").childPath(child))
-                self.settings.child(*path).setValue(saved_param.child('dataIN_settings',*path).value())
+                self.settings.child(*path).setValue(saved_param.child('dataIN_settings', *path).value())
 
             # data, axes, nav_axes, is_spread = self.h5browse.get_h5_data(node_path)
             # data_in_group = h5saver.get_set_group(h5saver.raw_group, "DataIn")
@@ -2220,6 +2225,7 @@ class Retriever(QObject):
         except Exception as e:
             logger.exception(str(e))
 
+
 class RetrieverWorker(QObject):
     result_signal = Signal(SimpleNamespace)
     status_sig = Signal(str)
@@ -2243,6 +2249,7 @@ class RetrieverWorker(QObject):
             self.stop_retriever()
 
     def start_retriever(self):
+        guess = None
         retriever_cls = _RETRIEVER_CLASSES[
             self.settings.child("retrieving", "algo_type").value()
         ]

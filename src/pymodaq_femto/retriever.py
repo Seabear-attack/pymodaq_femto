@@ -2,9 +2,10 @@ import sys
 import subprocess
 
 import numpy as np
+from pymodaq.utils.daq_utils import Axis
 from types import SimpleNamespace
-
-from pymodaq.utils.data import DataFromPlugins
+from pymodaq.utils.math_utils import my_moment
+from pymodaq.utils.data import DataFromPlugins, DataWithAxes
 from qtpy import QtWidgets, QtCore
 from qtpy.QtCore import QObject, Slot, QThread, Signal, QLocale
 from qtpy.QtGui import QIcon, QPixmap
@@ -1147,7 +1148,7 @@ class Retriever(QObject):
                         if not self.viewer_trace_in.get_action('ROIselect').isChecked():
                             self.viewer_trace_in.get_action('ROIselect').trigger()
                             QtWidgets.QApplication.processEvents()
-                        self.viewer_trace_in.ROIselect.setPos(
+                        self.viewer_trace_in.view.ROIselect.setPos(
                             self.settings.child(
                                 "processing", "ROIselect", "x0"
                             ).value(),
@@ -1155,7 +1156,7 @@ class Retriever(QObject):
                                 "processing", "ROIselect", "y0"
                             ).value(),
                         )
-                        self.viewer_trace_in.ROIselect.setSize(
+                        self.viewer_trace_in.view.ROIselect.setSize(
                             [
                                 self.settings.child(
                                     "processing", "ROIselect", "width"
@@ -1349,8 +1350,7 @@ class Retriever(QObject):
             )
 
             self.display_data_in()
-            self.update_spectrum_info(DataFromPlugins(name='Raw Spectrum',
-                                                      data=self.data_in["raw_spectrum"]))
+            self.update_spectrum_info(self.data_in["raw_spectrum"])
             self.update_trace_info(self.data_in["raw_trace"])
 
             for child in putils.iter_children_params(
@@ -1409,7 +1409,7 @@ class Retriever(QObject):
         self.display_spectrum_in()
 
     def update_spectrum_info(self, raw_spectrum):
-        wl0, fwhm = utils.my_moment(
+        wl0, fwhm = my_moment(
             raw_spectrum["x_axis"]["data"], raw_spectrum["data"]
         )
         self.settings.child("data_in_info", "spectrum_in_info", "wl0").setValue(
@@ -1583,15 +1583,15 @@ class Retriever(QObject):
                 )
                 limits.append(limit)
 
-            self.viewer_trace_in.ROIselect.setPos((limits[1][0], limits[0][0]))
-            self.viewer_trace_in.ROIselect.setSize(
+            self.viewer_trace_in.view.ROIselect.setPos((limits[1][0], limits[0][0]))
+            self.viewer_trace_in.view.ROIselect.setSize(
                 (limits[1][1] - limits[1][0], limits[0][1] - limits[0][0])
             )
 
             self.linear_region.setPos(limits[1])
 
-            pos = self.viewer_trace_in.ROIselect.pos()
-            size = self.viewer_trace_in.ROIselect.size()
+            pos = self.viewer_trace_in.view.ROIselect.pos()
+            size = self.viewer_trace_in.view.ROIselect.size()
 
         else:
             pos = (0,0)
@@ -1866,23 +1866,23 @@ class Retriever(QObject):
         # self.viewer_live_trace.histogrammer._histograms['red'].item.setLevels(-max, max)
         # self.viewer_live_trace.histogrammer._histograms['red'].item.setHistogramRange(-max, max)
 
-        self.viewer_live_trace.x_axis = utils.Axis(
+        self.viewer_live_trace.x_axis = Axis(
             data=args[2], label="Time", units="s"
         )
-        self.viewer_live_trace.y_axis = utils.Axis(
+        self.viewer_live_trace.y_axis = Axis(
             data=args[1], label="Frequency", units="m"
         )
 
         self.data_in["pulse_in"].spectrum = args[3]
         # self.data_in['pulse_in'] = substract_linear_phase(self.data_in['pulse_in'])
         self.viewer_live_time.show_data(
-            [np.abs(self.data_in["pulse_in"].field) ** 2],
-            x_axis=utils.Axis(data=self.data_in["pulse_in"].t, label="Time", units="s"),
+            DataWithAxes([np.abs(self.data_in["pulse_in"].field) ** 2]),
+            x_axis=Axis(data=self.data_in["pulse_in"].t, label="Time", units="s"),
             labels=["Temporal Intensity"],
         )
         self.viewer_live_lambda.show_data(
             [np.abs(self.data_in["pulse_in"].spectrum) ** 2],
-            x_axis=utils.Axis(
+            x_axis=Axis(
                 data=self.data_in["pulse_in"].wl, label="Wavelength", units="m"
             ),
             labels=["Spectral Intensity"],
@@ -2009,12 +2009,12 @@ class Retriever(QObject):
 
             data = self.dashboard.scan_module.scan_data_2D[0].T.copy()
 
-            parameter_axis = utils.Axis(
+            parameter_axis = Axis(
                 data=viewer.x_axis.axis_data(data.shape[0]),
                 label=viewer.x_axis.axis_label,
                 units=viewer.x_axis.axis_units
             )
-            wl = utils.Axis(
+            wl = Axis(
                 data=viewer.y_axis.axis_data(data.shape[1]),
                 label=viewer.y_axis.axis_label,
                 units=viewer.y_axis.axis_units

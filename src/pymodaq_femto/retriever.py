@@ -1799,7 +1799,7 @@ class Retriever(QObject):
             height = self.settings.child("processing", "ROIselect", "height").value()
             xlim_pxls = np.array([x0, x0 + width])
             ylim_pxls = np.array([y0, y0 + height])
-            xlim, ylim = self.viewer_trace_in.view.axis.scale_axis(xlim_pxls, ylim_pxls)
+            xlim, ylim = self.viewer_trace_in.view.scale_axis(xlim_pxls, ylim_pxls)
             trace_in = preprocess(trace_in, signal_range=(tuple(ylim), tuple(xlim)))
 
         self.data_in["trace_in"] = trace_in
